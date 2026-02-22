@@ -1,6 +1,26 @@
 from tkinter import *
 from tkinter import messagebox
-from turtle import end_fill
+from cryptography.fernet import Fernet
+
+def load_key():
+    """
+    Load the previously generated key
+    """
+    return open("secret.key", "rb").read()
+
+def decrypt_message(encrypted_message):
+    """
+    Decrypts an encrypted message
+    """
+    key = load_key()
+    f = Fernet(key)
+    decrypted_message = f.decrypt(encrypted_message)
+
+    print(decrypted_message.decode())
+
+if __name__ == "__main__":
+    decrypt_message(b'gAAAAABgLX7Zj-kn-We2BI_c9NQhEtfJEnHUVhVqtiqjkDi5dgJafj-_8QUDyeNS2zsJTdBWg6SntRJOjOM1U5mIxxsGny7IEGqpVVdHwheTnwzSBlgpb80=')
+
 
 
 def save_and_encrypt_notes():
@@ -11,13 +31,12 @@ def save_and_encrypt_notes():
     if len(title)==0 or len(message)==0 or len(master_secret)==0:
         messagebox.showwarning(title="Error!",message="Please enter your all info.")
     else:
-        #encr
-        
-            with open("mysecret.txt" ,"a") as data_file:
-                data_file.write(f"\n{title}\n{message}")
-            title_entry.delete(0, "end")
-            input_text.delete("1.0", "end")
-            master_secret_input.delete(0,"end")
+        # TODO: Encrypt message with master_secret before saving
+        with open("mysecret.txt", "a") as data_file:
+            data_file.write(f"\n{title}\n{message}")
+        title_entry.delete(0, "end")
+        input_text.delete("1.0", "end")
+        master_secret_input.delete(0, "end")
 
 
 FONT = ("Zapfino",20,"italic")
