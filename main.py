@@ -1,43 +1,71 @@
 from tkinter import *
 from tkinter import messagebox
 from cryptography.fernet import Fernet
-
-def load_key():
-    """
-    Load the previously generated key
-    """
-    return open("secret.key", "rb").read()
-
-def decrypt_message(encrypted_message):
-    """
-    Decrypts an encrypted message
-    """
-    key = load_key()
-    f = Fernet(key)
-    decrypted_message = f.decrypt(encrypted_message)
-
-    print(decrypted_message.decode())
-
-if __name__ == "__main__":
-    decrypt_message(b'gAAAAABgLX7Zj-kn-We2BI_c9NQhEtfJEnHUVhVqtiqjkDi5dgJafj-_8QUDyeNS2zsJTdBWg6SntRJOjOM1U5mIxxsGny7IEGqpVVdHwheTnwzSBlgpb80=')
+import base64
+import hashlib
 
 
+def get_fernet_key(master_secret: str) -> bytes:
+    # Şifreyi 32 bayta sabitle (Fernet için uygun anahtar üretir)
+    digest = hashlib.sha256(master_secret.encode()).digest()
+    return base64.urlsafe_b64encode(digest)
 
 def save_and_encrypt_notes():
     title= title_entry.get()
-    message= input_text.get("1.0","end")
-    master_secret = master_secret_input.get()
+    message= input_text.get("1.0","end").strip()
+    master_secret = master_secret_input.get().strip()
 
     if len(title)==0 or len(message)==0 or len(master_secret)==0:
         messagebox.showwarning(title="Error!",message="Please enter your all info.")
+        return
     else:
-        # TODO: Encrypt message with master_secret before saving
-        with open("mysecret.txt", "a") as data_file:
-            data_file.write(f"\n{title}\n{message}")
-        title_entry.delete(0, "end")
-        input_text.delete("1.0", "end")
-        master_secret_input.delete(0, "end")
+        key = get_fernet_key(master_secret)
+        f = Fernet(key)
+        combined = f"{title}\n{message}"
+        encrypted = f.encrypt(combined.encode())
 
+    with open("mysecret.txt", "ab") as data_file:
+        data_file.write(encrypted + b"\n")
+
+    title_entry.delete(0, "end")
+    input_text.delete("1.0", "end")
+    master_secret_input.delete(0, "end")
+    messagebox.showinfo("Saved", "Note encrypted and saved.")
+
+def decrypt_notes():
+    master_secret = master_secret_input.get().strip()
+    if not master_secret:
+        messagebox.showwarning(title="Error!", message="Enter master key to decrypt.")
+        return
+
+    try:
+        key = get_fernet_key(master_secret)
+        f = Fernet(key)
+        with open("mysecret.txt", "rb") as data_file:
+            content = data_file.read()
+        if not content.strip():
+            messagebox.showinfo("Decrypt", "No saved notes.")
+            return
+
+        lines = content.split(b"\n")
+        decrypted_list = []
+        for line in lines:
+            if not line:
+                continue
+            try:
+                decrypted = f.decrypt(line)
+                decrypted_list.append(decrypted.decode())
+            except Exception:
+                pass
+        if not decrypted_list:
+            messagebox.showerror("Decrypt Error", "Wrong key or no notes with this key.")
+        else:
+            messagebox.showinfo("Decrypted Notes", "\n\n---\n\n".join(decrypted_list))
+
+    except FileNotFoundError:
+       messagebox.showinfo("Decrypt", "No saved notes.")
+    except Exception:
+       messagebox.showerror("Decrypt Error", "Wrong key or invalid data.")
 
 FONT = ("Zapfino",20,"italic")
 window = Tk()
@@ -61,19 +89,19 @@ title_entry.pack()
 input_info_label = Label(text="Enter your secret",font=FONT)
 input_info_label.pack()
 
-input_text = Text()
+input_text = Text(width=40,height=10)
 input_text.pack()
 
 master_secret_label = Label(text="Enter master key",font=FONT)
 master_secret_label.pack()
 
-master_secret_input= Entry(width=20)
+master_secret_input= Entry(width=20,show="*")
 master_secret_input.pack()
 
 save_button = Button(text="Save & Encrypt" , command=save_and_encrypt_notes)
 save_button.pack()
 
-decrypt_button =Button(text="Decrypt")
+decrypt_button =Button(text="Decrypt",command=decrypt_notes)
 decrypt_button.pack()
 
 
