@@ -10,6 +10,25 @@ def get_fernet_key(master_secret: str) -> bytes:
     digest = hashlib.sha256(master_secret.encode()).digest()
     return base64.urlsafe_b64encode(digest)
 
+def decrypt_pasted_message():
+    master_secret = master_secret_input.get().strip()
+    token = encrypted_text.get("1.0", "end").strip()  # gAAAAA... gibi
+
+    if not master_secret or not token:
+        messagebox.showwarning("Error!", "Enter master key and paste encrypted message.")
+        return
+
+    try:
+        f = Fernet(get_fernet_key(master_secret))
+        plaintext = f.decrypt(token.encode()).decode()
+
+        # Sonucu ekrana bas (ister messagebox, ister input_text içine)
+        input_text.delete("1.0", "end")
+        input_text.insert("1.0", plaintext)
+
+    except Exception:
+        messagebox.showerror("Decrypt Error", "Wrong key or invalid encrypted message.")
+
 def save_and_encrypt_notes():
     title= title_entry.get()
     message= input_text.get("1.0","end").strip()
@@ -98,10 +117,16 @@ master_secret_label.pack()
 master_secret_input= Entry(width=20,show="*")
 master_secret_input.pack()
 
+encrypted_label = Label(text="Paste encrypted message", font=FONT)
+encrypted_label.pack()
+
+encrypted_text = Text(width=40, height=4)
+encrypted_text.pack()
+
 save_button = Button(text="Save & Encrypt" , command=save_and_encrypt_notes)
 save_button.pack()
 
-decrypt_button =Button(text="Decrypt",command=decrypt_notes)
+decrypt_button =Button(text="Decrypt",command=decrypt_pasted_message)
 decrypt_button.pack()
 
 
