@@ -4,6 +4,7 @@ from tkinter import messagebox
 from cryptography.fernet import Fernet
 import base64
 import hashlib
+from tkinter import ttk
 
 
 def get_fernet_key(master_secret: str) -> bytes:
@@ -97,8 +98,10 @@ def decrypt_notes():
 
 FONT = ("Zapfino",20,"italic")
 window = Tk()
-window.title("Secret Notes")
-window.config(padx=10 ,pady=10)
+window.title("🔐 Secret Notes")
+window.geometry("500x650")
+window.config(padx=20 ,pady=20)
+
 
 #UI
 
