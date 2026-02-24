@@ -1,3 +1,4 @@
+from email import message
 from tkinter import *
 from tkinter import messagebox
 from cryptography.fernet import Fernet
@@ -21,10 +22,18 @@ def decrypt_pasted_message():
     try:
         f = Fernet(get_fernet_key(master_secret))
         plaintext = f.decrypt(token.encode()).decode()
+#       
+#        title ve secret'ı ayır
+        title, message = plaintext.split("\n", 1) if "\n" in plaintext else (plaintext, "")
 
-        # Sonucu ekrana bas (ister messagebox, ister input_text içine)
+        # title alanını doldur
+        title_entry.delete(0, "end")
+        title_entry.insert(0, title)
+
+        # secret alanını doldur
         input_text.delete("1.0", "end")
-        input_text.insert("1.0", plaintext)
+        input_text.insert("1.0", message)
+
 
     except Exception:
         messagebox.showerror("Decrypt Error", "Wrong key or invalid encrypted message.")
@@ -128,6 +137,5 @@ save_button.pack()
 
 decrypt_button =Button(text="Decrypt",command=decrypt_pasted_message)
 decrypt_button.pack()
-
 
 window.mainloop()
